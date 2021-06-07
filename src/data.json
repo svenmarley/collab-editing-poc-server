@@ -1,0 +1,18 @@
+{
+  "docs": {
+    "test.txt": {
+      "name": "test.txt",
+      "lastMutation": [ 11, 2 ],
+      "authorState": {
+        "alice": {
+          "currIndex": 11,
+          "lastEditDateTime": "2021/05/31T13:22:14"
+        },
+        "bob": {
+          "currIndex": 2,
+          "lastEditDateTime": "2021/05/30T13:22:14"
+        }
+      }
+    }
+  }
+}
