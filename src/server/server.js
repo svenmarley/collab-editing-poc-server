@@ -1,7 +1,8 @@
-const DocPeer = require( './DocPeer' ).DocPeer;
+const { ConversationPeer } = require( '../models/ConversationPeer' );
+const { Conversation } = require( '../models/Conversation' );
+const { UserPeer } = require( '../models/UserPeer' );
 
-const sFunc = 'server.js-->';
-const Data = require( './Data' ).Data;
+const sFunc = __filename + '-->';
 
 const express = require( 'express' );
 const bp = require( 'body-parser' );
@@ -10,11 +11,25 @@ const config = require( '../config' );
 
 const app = express();
 
-global.dataConfig = new Data();
-dataConfig.setConfig( config.dataDir );
+global.mysql = require( 'mysql' );
+global.dbConnection = mysql.createConnection( {
+                                                  host : 'localhost',
+                                                  port : 3389,
+                                                  user : 'user',
+                                                  password : 'Password01!',
+                                                  database : 'collab_editing_poc_server_db',
+                                              } );
 
-dataConfig.readDocsConfig();
-console.log( sFunc + 'gDataConfig.store.currDocsConfig ', dataConfig.store.currDocsConfig );
+dbConnection.connect( ( err ) => {
+    if ( err ) {
+        console.log( 'err', err );
+        throw err;
+    }
+
+    console.log( 'Connected to database' );
+} );
+
+// global.mysql = require( 'mysql2/promise' );
 
 // ****************************************************************************************************************
 // ****************************************************************************************************************
@@ -24,7 +39,7 @@ const WebSocketServer = require( 'websocket' );
 const http = require( 'http' );
 
 const server = http.createServer( ( req, res ) => {
-    const sFunc = 'server.js.http.createServer()-->';
+    const sFunc = sFunc + '.http.createServer()-->';
 
     console.log( sFunc + 'Received req for ' + req.url );
     res.writeHead( 404 );
@@ -40,15 +55,13 @@ const wsServer = new WebSocketServer.server( {
 
                                              } );
 
-function originIsAllowed( origin ) {
-    return true;
-}
-
 wsServer.on( 'connection', function( connection ) {
-    const sFunc = 'server.js.wsServer.on(connection) -->';
-    console.log( sFunc + 'Connection' );
+    const sFunc = sFunc + '.wsServer.on(connection) -->';
+    //console.log( sFunc + 'Connection' );
 
     const connectionID = getUniqueID();
+    console.log( sFunc + 'wsServer connected to browser on connectionID', connectionID );
+
     clients[connectionID] = connection;
 } );
 
@@ -65,7 +78,7 @@ wsServer.on( 'request', function( request ) {
     const connection = request.accept( null, request.origin );
     connection.id = tempID;
     clients.push( connection );
-    debug && console.log( sFunc + 'connected: ' + tempID, 'connection', connection );// + Object.getOwnPropertyNames( clients ) );
+    debug && console.log( sFunc + 'connected: ' + tempID ); //, 'connection', connection );// + Object.getOwnPropertyNames( clients ) );
 
     connection.on( 'message', function( message ) {
         const sFunc = 'wsServer. connection.on()-->';
@@ -88,20 +101,20 @@ wsServer.on( 'request', function( request ) {
 
 } );
 
-function sendDocUpdate( doc ) {
-    const sFunc = 'server.js.sendDocUpdate( doc )-->';
+function sendConversationUpdate( con ) {
+    const sFunc = 'server.js.sendConversationUpdate( con )-->';
     const debug = true;
 
-    debug && console.log( sFunc + 'here  client size', clients.length );
+    debug && console.log( sFunc + 'client.length', clients.length );
 
     clients.forEach( ( c ) => {
         let toSend = {
-            id : doc.name,
-            lastMutation : doc.lastMutation,
-            content : doc.getContent(),
+            id : con.id,
+            lastMutation : con.lastMutation,
+            content : con.getContent(),
         };
 
-        debug && console.log( sFunc + 'sending doc to ', c.id, 'toSend', toSend );
+        debug && console.log( sFunc + 'sending con to ', c.id, 'toSend', toSend );
 
         c.send( JSON.stringify( toSend ) );
     } );
@@ -117,7 +130,6 @@ app.use( bp.urlencoded( { extended : true } ) );
 app.use( cors() );
 //app.disable( 'etag' );        // disables caching
 
-
 console.log( 'starting API Server' );
 
 app.get( '/ping', ( req, res ) => {
@@ -127,28 +139,37 @@ app.get( '/ping', ( req, res ) => {
 } );
 
 app.get( '/info', ( req, res ) => {
-    const sFunc = 'app.get()  /info';
+    const sFunc = 'app.get()  /info-->';
 
-    console.log( sFunc + 'path', req.path );
-    res.json(
-        {
-            'ok' : true,
-            'author' : {
-                'email' : config.authorEmail,
-                'name' : config.authorName,
-            },
-            'frontend' : {
-                'url' : config.webURL,
-            },
-            'language' : 'node.js',
-            'sources' : config.githubURL,
-            'answers' : {
-                '1' : config.q1,
-                '2' : config.q2,
-                '3' : config.q3,
-            },
-        },
-    );
+    let userShortName = req.get( 'Authorization' );
+
+    console.log( sFunc + 'userShortName', userShortName );
+
+    UserPeer.findOne( { SHORT_NAME : userShortName } )
+            .then( ( user ) => {
+                let t = {
+                    'ok' : true,
+                    'author' : {
+                        'email' : user.email,
+                        'name' : user.name,
+                    },
+                    'frontend' : {
+                        'url' : config.webURL,
+                    },
+                    'language' : 'node.js',
+                    'sources' : config.githubURL,
+                    'answers' : {
+                        '1' : config.q1,
+                        '2' : config.q2,
+                        '3' : config.q3,
+                    },
+                };
+
+                console.log( sFunc + 'returning', t );
+
+                res.json( t );
+
+            } );
 
 } );
 
@@ -158,103 +179,155 @@ app.get( '/conversations', ( req, res ) => {
 
     console.log( sFunc + 'req.path', req.path );
 
-    let aDocs = DocPeer.find( '', 'EVERYTHING' );
+    ConversationPeer.find()
+                    .then( ( aCons ) => {
+                        let aRetConInfos = aCons.map( ( con ) => {
+                            let t = {
+                                id : con.ID,
+                                lastMutation : con.lastMutation,
+                                text : con.getContent(),
+                            };
 
-    let aRetDocInfos = aDocs.map( ( doc ) => {
-        let t = {
-            id : doc.name,
-            lastMutation : doc.lastMutation,
-            text : doc.getContent(),
-        };
+                            return ( t );
+                        } );
 
-        return ( t );
-    } );
+                        const oRet = {
+                            conversations : aRetConInfos,
+                            msg : '',
+                            ok : true,
+                        };
 
-    const oRet = {
-        'conversations' : aRetDocInfos,
-        msg : '',
-        ok : true,
-    };
+                        debug && console.log( sFunc + 'oRet', oRet );
 
-    debug && console.log( sFunc + 'oRet', oRet );
-
-    res.send( oRet );
+                        res.send( oRet );
+                    } );
 
 } );
 
-app.get( '/docs/:docId', ( req, res ) => {
-    const { docId } = req.params;
+app.get( '/conversations/:conversationId', ( req, res ) => {
+    const { conversationId } = req.params;
 
-    const sFunc = `app.get()  /docs/${docId}  -->`;
+    const sFunc = `app.get()  /cons/${conversationId}  -->`;
     const debug = true;
 
-    debug && console.log( sFunc + 'docId', docId, 'req.body', req.body );
+    debug && console.log( sFunc + 'conversationId', conversationId );
 
-    let doc = DocPeer.findOne( docId );
+    ConversationPeer.findOne( conversationId )
+                    .then( ( con ) => {
+                        debug && console.log( sFunc + 'con', con );
 
-    debug && console.log( sFunc + 'doc', doc );
-
-    let t;
-    if ( doc ) {
-        t = {
-            id : doc.name,
-            lastMutation : doc.lastMutation,
-            text : doc.getContent(),
-        };
-        debug && console.log( sFunc + 'returning ', t );
-        res.send( t );
-    }
-    else {
-        res.status( 404 );
-        res.send();
-    }
+                        if ( con ) {
+                            let t = {
+                                id : con.ID,
+                                lastMutation : con.lastMutation,
+                                text : con.getContent(),
+                            };
+                            debug && console.log( sFunc + 'returning ', t );
+                            res.send( t );
+                        }
+                        else {
+                            res.status( 404 );
+                            res.send();
+                        }
+                    } )
+                    .catch( ( e ) => {
+                        console.log( sFunc + 'e', e );
+                        res.status( 404 );
+                        res.send();
+                    } );
 
 } );
 
-app.post( '/mutations/:docId', ( req, res ) => {
-    const { docId } = req.params;
-    const sFunc = `app.post() /mutations/${docId}  -->`;
+app.post( '/conversations/', ( req, res ) => {
+    const sFunc = 'server.js.app.post(/cons)   /conversations/-->';
 
-    const token = req.get( 'Authorization' );
+    let Con = new Conversation();
 
-    if ( token ) {
-        req.token = token;
+    Con.content = '';
 
-        console.log( sFunc + 'author', token );
-        dataConfig.setAuthor( token );
+    Con.save()
+       .then( ( ret ) => {
+           console.log( sFunc + 'ret', ret );
+
+           const t = {
+               ID : ret.ID,
+           };
+           res.send( t );
+       } )
+       .catch( ( e ) => {
+           console.log( sFunc + 'e', e );
+       } );
+
+} );
+
+app.post( '/mutations', ( req, res ) => {
+    const sFunc = `app.post()  /mutations/  -->`;
+    const debug = true;
+
+    const author = req.get( 'Authorization' );
+    debug && console.log( sFunc + 'author', author );
+
+    debug && console.log( sFunc + 'req.body ', req.body );
+
+    let conversationId = req.body.conversationId;
+
+    // validate "type"
+
+    let validTypes = [ 'INS', 'DEL' ];
+    let type = req.body.data.type;
+    if ( !validTypes.includes( type ) ) {
+        res.status( 404 ); // todo:  wrong code
+        res.send( 'Type must be either INS or DEL' );
     }
 
-    console.log( sFunc + ' req.body', req.body );
+    ConversationPeer.findOne( conversationId )
+                    .then( ( conversation ) => {
+                        debug && console.log( sFunc + ' findOne', conversation );
 
-    const doc = DocPeer.findOne( docId );
-    console.log( sFunc + 'findOne', doc );
+                        if ( conversation ) {
+                            const { data, origin : originBlock } = req.body;
+                            const { index, length, text, type } = data;
 
-    if ( doc ) {
-        const { data, authorsCurrMutation } = req.body;
-        const { index, length, text, type } = data;
+                            let origin = '(';
+                            Object.getOwnPropertyNames( originBlock ).forEach( ( k ) => {
+                                origin += originBlock[k] + ', ';
+                            } );
+                            origin = origin.splice( -2, '', 2 ) + ')';
+                            console.log( sFunc + 'origin', origin );
 
-        if ( type === 'insert' ) {
-            doc.insert( index, text, length );
-        } else if ( type === 'delete' ) {
-            doc.delete( index, length );
-        }
+                            conversation.applyMutation( origin, type, index, length, text, author )
+                                        .then( ( bResult ) => {
 
-        const body = {
-            msg : '',
-            'ok' : true,
-            'text' : doc.getContent(),
-        };
-        res.send( body );
+                                            if ( bResult ) {
+                                                const body = {
+                                                    msg : '',
+                                                    'ok' : true,
+                                                    'text' : conversation.getContent(),
+                                                };
+                                                res.send( body );
+                                            }
+                                            else {
 
-        sendDocUpdate( doc );
+                                            }
 
-        doc.writeDoc();
+                                        } )
+                                        .catch( ( e ) => {
+                                            console.log( sFunc + 'e1', e );
+                                            res.status( 404 );
+                                            res.send();
+                                        } );
 
-    }
-    else {
-        res.status( 404 );
-        res.send();
-    }
+                        }
+                        else {
+                            res.status( 404 );
+                            res.send();
+                        }
+                    } )
+                    .catch( ( e ) => {
+                        console.log( sFunc + 'e2', e );
+                        res.status( 404 );
+                        res.send();
+                    } );
 
 } );
 
@@ -266,7 +339,6 @@ app.use( ( req, res, next ) => {
         req.token = token;
 
         console.log( sFunc + 'author', token );
-        dataConfig.setAuthor( token );
 
         next();
     }
