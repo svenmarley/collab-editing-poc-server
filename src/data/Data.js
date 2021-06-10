@@ -139,11 +139,11 @@ class Data {
 
             const currDoc = docs[doc.name];
             console.log( sFunc + 'currDoc', currDoc );
+            currDoc.origin = doc.origin;
 
             console.log( sFunc + 'this.store', this.store );
             let authorState = currDoc.authorState[this.store.currAuthor];
             console.log( sFunc + 'authorState', authorState );
-            authorState.currIndex = doc.lastMutation;   // todo:  this isn't right
             authorState.lastEditDateTime = new Date().toUTCString();
 
             this.writeConfig();

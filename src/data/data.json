@@ -2,14 +2,12 @@
   "docs": {
     "test.txt": {
       "name": "test.txt",
-      "lastMutation": [
-        11,
-        2
-      ],
+      "origin": "(11, 2)",
+      "lastMutation": "alice(11, 2)INS 0:'H'",
       "authorState": {
         "alice": {
-          "currIndex": "(11, 2)",
-          "lastEditDateTime": "Mon, 07 Jun 2021 17:29:37 GMT"
+          "currIndex": 11,
+          "lastEditDateTime": "Mon, 07 Jun 2021 19:41:56 GMT"
         },
         "bob": {
           "currIndex": 2,
