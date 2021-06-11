@@ -6,7 +6,7 @@ class ConversationPeer {
         const sFunc = 'ConversationPeer.findOne()--> ';
         const debug = false;
 
-        return new Promise( ( respond, /*reject*/ ) => {
+        return new Promise( ( respond /*reject*/ ) => {
             ConversationPeer.find( searchFileId )
                             .then( ( aConversations ) => {
                                 debug &&
@@ -28,7 +28,7 @@ class ConversationPeer {
         let query = 'SELECT * FROM tblCONVERSATIONS where ID like ?';
         //debug && console.log( sFunc + 'query', query );
 
-        return new Promise( ( respond, /*reject*/ ) => {
+        return new Promise( ( respond /*reject*/ ) => {
             let go = dbConnection.query( query, [ searchFileId ], ( err, rows ) => {
                 debug && console.log( sFunc + 'rows ', rows );
                 if ( !err ) {
@@ -51,7 +51,27 @@ class ConversationPeer {
                 }
                 debug && console.log( sFunc + 'sql', go.sql );
 
-            } )
+            } );
+        } );
+
+    }
+
+    static truncate() {
+        const sFunc = 'ConversationPeer.truncate()-->';
+        const debug = true;
+
+        return new Promise( ( respond, reject ) => {
+            let q = 'truncate tblCONVERSATIONS;';
+            let go = dbConnection.query( q, ( err, results ) => {
+
+                debug && console.log( sFunc + 'err', err, 'results', results );
+
+                if ( err ) {
+                    reject( err );
+                }
+                respond( true );
+            } );
+            debug && console.log( sFunc + 'sql', go.sql)
         } );
 
     }

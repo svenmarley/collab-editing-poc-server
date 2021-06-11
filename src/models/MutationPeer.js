@@ -87,6 +87,27 @@ class MutationPeer {
 
         } );
     }
+
+    static truncate() {
+        const sFunc = 'MutationPeer.truncate()-->';
+        const debug = true;
+
+        return new Promise( ( respond, reject ) => {
+            let q = 'truncate tblMUTATIONS;';
+            let go = dbConnection.query( q, ( err, results ) => {
+
+                debug && console.log( sFunc + 'err', err, 'results', results );
+
+                if ( err ) {
+                    reject( err );
+                }
+                respond( true );
+            } );
+            debug && console.log( sFunc + 'sql', go.sql )
+        } );
+
+    }
+
 }
 
 module.exports = { MutationPeer };

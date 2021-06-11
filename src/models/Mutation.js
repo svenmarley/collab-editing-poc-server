@@ -75,7 +75,7 @@ class Mutation {
 
                                     if ( results.affectedRows === 1 ) {
                                         this.ID = results.insertId;
-                                        respond( { ID : this.ID } );     // todo: should respond with 204 for update and 200 for insert
+                                        respond( { ID : this.ID } );
                                     }
                                     console.log( sFunc + 'sql', go.sql );
                                 } );

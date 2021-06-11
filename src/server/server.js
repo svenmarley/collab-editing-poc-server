@@ -37,6 +37,9 @@ dbConnection.connect( ( err ) => {
 
 const WebSocketServer = require( 'websocket' );
 const http = require( 'http' );
+const { isDelete, isInsert } = require( '../models/Conversation' );
+const { Mutation } = require( '../models/Mutation' );
+const { MutationPeer } = require( '../models/MutationPeer' );
 
 const server = http.createServer( ( req, res ) => {
     const sFunc = sFunc + '.http.createServer()-->';
@@ -108,13 +111,9 @@ function sendConversationUpdate( con ) {
     debug && console.log( sFunc + 'client.length', clients.length );
 
     clients.forEach( ( c ) => {
-        let toSend = {
-            id : con.id,
-            lastMutation : con.lastMutation,
-            content : con.getContent(),
-        };
+        const toSend = con.returnBlockToSend();
 
-        debug && console.log( sFunc + 'sending con to ', c.id, 'toSend', toSend );
+        debug && console.log( sFunc + 'sending conversation to ', c.id, 'toSend', toSend );
 
         c.send( JSON.stringify( toSend ) );
     } );
@@ -217,11 +216,7 @@ app.get( '/conversations/:conversationId', ( req, res ) => {
                         debug && console.log( sFunc + 'con', con );
 
                         if ( con ) {
-                            let t = {
-                                id : con.ID,
-                                lastMutation : con.lastMutation,
-                                text : con.getContent(),
-                            };
+                            const t = con.returnBlockToSend();
                             debug && console.log( sFunc + 'returning ', t );
                             res.send( t );
                         }
@@ -272,11 +267,8 @@ app.post( '/mutations', ( req, res ) => {
     let conversationId = req.body.conversationId;
 
     // validate "type"
-
-    let validTypes = [ 'INS', 'DEL' ];
-    let type = req.body.data.type;
-    if ( !validTypes.includes( type ) ) {
-        res.status( 404 ); // todo:  wrong code
+    if ( !isInsert( req.body.data.type ) && !isDelete( req.body.data.type )) {
+        res.status( 404 ); // todo:  fix the return code
         res.send( 'Type must be either INS or DEL' );
     }
 
@@ -288,11 +280,12 @@ app.post( '/mutations', ( req, res ) => {
                             const { data, origin : originBlock } = req.body;
                             const { index, length, text, type } = data;
 
-                            let origin = '(';
-                            Object.getOwnPropertyNames( originBlock ).forEach( ( k ) => {
-                                origin += originBlock[k] + ', ';
-                            } );
-                            origin = origin.splice( -2, '', 2 ) + ')';
+                            // "origin": {
+                            //     "alice": "integer",
+                            //     "bob": "integer"
+                            // }
+                            // todo: take out this hardcoded crap
+                            let origin = `(${originBlock.alice},${originBlock.bob})`;
                             console.log( sFunc + 'origin', origin );
 
                             conversation.applyMutation( origin, type, index, length, text, author )
@@ -306,17 +299,20 @@ app.post( '/mutations', ( req, res ) => {
                                                 };
                                                 res.send( body );
                                             }
-                                            else {
 
-                                            }
+                                            sendConversationUpdate( conversation );
 
                                         } )
                                         .catch( ( e ) => {
                                             console.log( sFunc + 'e1', e );
-                                            res.status( 404 );
-                                            res.send();
+                                            const body = {
+                                                msg : e,
+                                                'ok' : false,
+                                                'text' : null,
+                                            };
+                                            res.status( 404 );  // todo: fix the return code
+                                            res.send( body );
                                         } );
-
                         }
                         else {
                             res.status( 404 );
@@ -369,6 +365,51 @@ app.use( ( req, res, next ) => {
 //                                 } );
 //     }
 // } );
+
+app.get( '/resetDb', ( req, res ) => {
+    const sFunc = 'server.app.post()  /resetDb ';
+    const debug = true;
+
+    ConversationPeer.truncate()
+                    .then( ( /* results */ ) => {
+                        let con = new Conversation();
+
+                        con.origin = '(1,1)';
+                        con.lastMutation = 'bob (1,0)DEL 11:1';
+                        con.setContent( 'hello world' );
+                        con.save()
+                           .then( ( results ) => {
+                               debug && console.log( sFunc + 'results', results, 'new ID', con.ID );
+
+                               MutationPeer.truncate()
+                                           .then( ( /* results */ ) => {
+
+                                               let mut = new Mutation( con.ID,
+                                                                       1,
+                                                                       '(0,0)',
+                                                                       'alice (0,0)INS 0:\'hello worldx\'' );
+
+                                               mut.save()
+                                                  .then( ( /* results */ ) => {
+                                                      let mut = new Mutation( con.ID,
+                                                                              2,
+                                                                              '(1,0)',
+                                                                              'bob (1,0)DEL: 11:1' );
+
+                                                      mut.save()
+                                                         .then( ( /* results */ ) => {
+                                                             res.send( 'OK' );
+
+                                                         } );
+                                                  } );
+                                           } );
+                           } );
+                    } )
+                    .catch( ( e ) => {
+                        console.log( sFunc + 'error', e );
+                    } );
+
+} );
 
 app.listen( config.apiServerPort, () => {
     console.log( 'Server listening on port %s, Ctrl+C to stop', config.apiServerPort );
