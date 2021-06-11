@@ -1,6 +1,9 @@
 const { Mutation } = require( './Mutation' );
 const { UserPeer } = require( './UserPeer' );
 
+global.aInsertOptions = [ 'ins', 'insert' ];
+global.aDeleteOptions = [ 'del', 'delete' ];
+
 class Conversation {
     #sFunc = 'Conversation';
     ID = null;
@@ -33,17 +36,27 @@ class Conversation {
                                     // updating old rec
                                     let vars = [ this.getContent(), this.origin, this.lastMutation, this.ID ];
                                     const sQuery = 'UPDATE tblCONVERSATIONS set CONTENT = ?, ORIGIN = ?, LAST_MUTATION = ? where ID = ? ';
-                                    let go = dbConnection.query( sQuery, vars, ( err, rows ) => {
-                                        debug && console.log( sFunc + 'err', err, 'rows', rows );
+                                    let go = dbConnection.query( sQuery, vars, ( err, results ) => {
+                                        debug && console.log( sFunc + 'err', err, 'results', results );
 
-                                        respond( true );
+                                        let bRet = false;
+                                        if ( results.affectedRows >= 1 )
+                                            bRet = true;
+                                        else
+                                            console.log( sFunc + 'ERROR: results', results );
+                                        respond( bRet );
                                     } );
                                     console.log( sFunc + 'sql', go.sql );
 
                                 }
                                 else {
                                     // inserting new rec
-                                    let vars = { content : this.getContent(), origin : '(0,0)' };
+                                    let vars = {
+                                        CONTENT : this.getContent(),
+                                        ORIGIN : this.origin,
+                                        LAST_MUTATION : this.lastMutation,
+                                    };
+
                                     let go = dbConnection.query( 'INSERT INTO tblCONVERSATIONS SET ?', vars, ( err, results ) => {
                                         debug && console.log( sFunc + 'err', err, 'results', results );
 
@@ -76,7 +89,7 @@ class Conversation {
         const sFunc = this.#sFunc + '.applyMutation()-->';
         const debug = true;
 
-        return new Promise( ( respond, /*reject*/ ) => {
+        return new Promise( ( respond ,reject ) => {
 
             // figures out what the mutations should be in case there is a "tie"
             // possibly recalculates origin and index
@@ -89,40 +102,44 @@ class Conversation {
             // "lastMutation": "alice(11, 2)INS 0:'H'",
             this.lastMutation = this.createMutationText( this.origin, inType, newIndex, inLength, inText, inAuthor );
 
+            // apply the mutation
             let mut = new Mutation( this.ID, inAuthor, this.origin, this.lastMutation );
             debug && console.log( sFunc + 'new mut', mut );
             mut.save()
                .then( ( ret ) => {
                    debug && console.log( sFunc + 'mut.save() returned()', ret );
+
+                   let newContent;
+
+                   if ( isInsert( inType ) ) {
+                       newContent = this.content.splice( newIndex, inText );
+                   }
+                   else {
+                       newContent = this.content.splice( newIndex, '', inLength );
+                   }
+                   if ( debug ) {
+                       console.log( sFunc + 'mutation', this.lastMutation );
+                       console.log( sFunc + 'oldContent', this.getContent(), 'newContent', newContent );
+                   }
+                   this.setContent( newContent );
+
+                   this.origin = this.moveOrigin( inAuthor, newCalculatedOrigin );
+
+                   this.save()
+                       .then( ( ) => {
+                           respond( true );
+
+                       } )
+                       .catch( ( e ) => {
+                           console.log( sFunc + 'this.save().catch  e', e );
+                           reject( e );
+                       } );
+
                } )
                .catch( e => {
                    console.log( sFunc + 'e2', e );
                } );
 
-            // apply the mutation
-            let newContent;
-            if ( inType === 'INS' ) {
-                newContent = this.content.splice( newIndex, inText );
-            }
-            else {
-                newContent = this.content.splice( newIndex, '', inLength );
-            }
-            if ( debug ) {
-                console.log( sFunc + 'mutation', this.lastMutation );
-                console.log( sFunc + 'oldContent', this.getContent(), 'newContent', newContent );
-            }
-            this.setContent( newContent );
-
-            this.origin = this.moveOrigin( inAuthor, newCalculatedOrigin );
-
-            this.save()
-                .then( ( ) => {
-                    respond( true );
-                } )
-                .catch( ( e ) => {
-                    console.log( sFunc + 'this.save().catch  e', e );
-                    //reject( false );
-                } );
         } );
     }
 
@@ -155,7 +172,10 @@ class Conversation {
 
         let sRet = `${author} ${origin}`;
 
-        if ( type === 'INS' )
+        const isInsert = aInsertOptions.findIndex( ( o ) => {
+            return ( o.toLowerCase() === type.toLowerCase() );
+        } );
+        if ( isInsert )
             sRet += `INS ${index}:'${text}'`;
         else
             sRet += `DEL ${index}:${length}`;
@@ -163,12 +183,55 @@ class Conversation {
         return sRet;
     }
 
+    returnBlockToSend(){
+        return {
+            id : this.ID,
+            lastMutation : this.lastMutation,
+            origin: this.origin,
+            content : this.getContent(),
+        };
+    }
+
 }
 
-module.exports = { Conversation };
+module.exports = { Conversation, isInsert, isDelete };
 
 String.prototype.splice = function( offset, text, removeCount = 0 ) {
     let calculatedOffset = offset < 0 ? this.length + offset : offset;
     return this.substring( 0, calculatedOffset ) +
         text + this.substring( calculatedOffset + removeCount );
 };
+
+function isInsert( inType ) {
+    const sFunc = 'server.js.isInsert()-->';
+    const debug = false;
+
+    debug && console.log( sFunc + 'inType', inType, 'aInsertOptions', aInsertOptions );
+
+    let found = false;
+    aInsertOptions.forEach( ( o ) => {
+        if ( o.toLowerCase() === inType.toLowerCase() )
+            found = true;
+    } );
+
+    debug && console.log( sFunc + 'returning', found );
+
+    return found;
+}
+
+function isDelete( inType ) {
+    const sFunc = 'server.js.isDelete()-->';
+    const debug = false;
+
+    debug && console.log( sFunc + 'inType', inType, 'aDeleteOptions', aDeleteOptions );
+
+    let found = false;
+    aDeleteOptions.forEach( ( o ) => {
+        if ( o.toLowerCase() === inType.toLowerCase() )
+            found = true;
+    } );
+
+    debug && console.log( sFunc + 'returning', found );
+
+    return found;
+}
