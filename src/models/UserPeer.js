@@ -61,7 +61,7 @@ class UserPeer {
         }
         debug && console.log( sFunc + 'query', query, 'vars', vars );
 
-        return new Promise( ( respond, /*reject*/ ) => {
+        return new Promise( ( respond, /* reject */ ) => {
             let go = dbConnection.query( query, vars, ( err, rows ) => {
                 debug && console.log( sFunc + 'rows ', rows );
                 if ( !err ) {
