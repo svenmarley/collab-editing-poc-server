@@ -262,19 +262,20 @@ app.post( '/mutations', ( req, res ) => {
     const author = req.get( 'Authorization' );
     debug && console.log( sFunc + 'author', author );
 
+    //console.log( sFunc + 'req', req );
     debug && console.log( sFunc + 'req.body ', req.body );
 
     let conversationId = req.body.conversationId;
 
     // validate "type"
-    if ( !isInsert( req.body.data.type ) && !isDelete( req.body.data.type )) {
+    if ( !isInsert( req.body.data.type ) && !isDelete( req.body.data.type ) ) {
         res.status( 404 ); // todo:  fix the return code
         res.send( 'Type must be either INS or DEL' );
     }
 
     ConversationPeer.findOne( conversationId )
                     .then( ( conversation ) => {
-                        debug && console.log( sFunc + ' findOne', conversation );
+                        debug && console.log( sFunc + '.ConversationPeer.findOne()', conversation );
 
                         if ( conversation ) {
                             const { data, origin : originBlock } = req.body;
@@ -296,6 +297,7 @@ app.post( '/mutations', ( req, res ) => {
                                                     msg : '',
                                                     'ok' : true,
                                                     'text' : conversation.getContent(),
+                                                    origin: conversation.origin,
                                                 };
                                                 res.send( body );
                                             }
@@ -334,7 +336,7 @@ app.use( ( req, res, next ) => {
     if ( token ) {
         req.token = token;
 
-        console.log( sFunc + 'author', token );
+        //console.log( sFunc + 'author', token );
 
         next();
     }
@@ -379,10 +381,12 @@ app.get( '/resetDb', ( req, res ) => {
                         con.setContent( 'hello world' );
                         con.save()
                            .then( ( results ) => {
-                               debug && console.log( sFunc + 'results', results, 'new ID', con.ID );
+                               debug && console.log( sFunc + 'con.save() results', results, 'new ID', con.ID );
 
                                MutationPeer.truncate()
-                                           .then( ( /* results */ ) => {
+                                           .then( ( results ) => {
+
+                                               debug && console.log( sFunc + 'mut.save() results', results );
 
                                                let mut = new Mutation( con.ID,
                                                                        1,
@@ -398,8 +402,9 @@ app.get( '/resetDb', ( req, res ) => {
 
                                                       mut.save()
                                                          .then( ( /* results */ ) => {
-                                                             res.send( 'OK' );
+                                                             debug && console.log( sFunc + 'mut.save() results', results );
 
+                                                             res.send( { OK: true } );
                                                          } );
                                                   } );
                                            } );
