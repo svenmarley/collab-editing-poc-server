@@ -22,7 +22,7 @@ class MutationPeer {
         const { Mutation } = require( './Mutation' );
 
         const sFunc = 'MutationPeer::find()-->';
-        const debug = true;
+        const debug = false;
 
         debug && console.log( sFunc + 'searchStruct', searchStruct );
         let query;
@@ -49,7 +49,7 @@ class MutationPeer {
                     fields.push( f );
                     tVars.push( searchStruct[f] );
                 } );
-                console.log( sFunc + 'fields', fields, 'tVars', tVars );
+                debug && console.log( sFunc + 'fields', fields, 'tVars', tVars );
 
                 query = 'SELECT * FROM tblMUTATIONS where ';
                 for ( let x = 0; x < fields.length; x++ ) {
@@ -79,18 +79,18 @@ class MutationPeer {
                         aMutations.push( mut );
 
                     } );
-                    console.log( sFunc + 'returning', aMutations );
+                    debug && console.log( sFunc + 'returning', aMutations );
                     respond( aMutations );
                 }
             } );
-            console.log( sFunc + 'sql', go.sql );
+            debug && console.log( sFunc + 'sql', go.sql );
 
         } );
     }
 
     static truncate() {
         const sFunc = 'MutationPeer.truncate()-->';
-        const debug = true;
+        const debug = false;
 
         return new Promise( ( respond, reject ) => {
             let q = 'truncate tblMUTATIONS;';

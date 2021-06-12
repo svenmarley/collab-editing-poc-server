@@ -51,7 +51,7 @@ class UserPeer {
                 fields.push( f );
                 tVars.push( searchName[f] );
             } );
-            console.log( sFunc + 'fields', fields, 'tVars', tVars );
+            debug && console.log( sFunc + 'fields', fields, 'tVars', tVars );
 
             query = 'SELECT * FROM tblUSERS where ';
             for ( let x = 0; x < fields.length; x++ ) {
@@ -59,9 +59,9 @@ class UserPeer {
                 vars.push( tVars[x] );
             }
         }
-        console.log( sFunc + 'query', query, 'vars', vars );
+        debug && console.log( sFunc + 'query', query, 'vars', vars );
 
-        return new Promise( ( respond, reject ) => {
+        return new Promise( ( respond, /* reject */ ) => {
             let go = dbConnection.query( query, vars, ( err, rows ) => {
                 debug && console.log( sFunc + 'rows ', rows );
                 if ( !err ) {
@@ -71,18 +71,16 @@ class UserPeer {
                         user.name = row.NAME;
                         user.email = row.EMAIL;
                         user.shortName = row.SHORT_NAME;
+                        user.ID = row.ID;
 
-                        console.log( sFunc + 'user', user );
+                        debug && console.log( sFunc + 'user', user );
 
                         aUsers.push( user );
 
                     } );
-                    console.log( sFunc + 'returning', aUsers );
+                    // console.log( sFunc + 'returning', aUsers );
                     respond( aUsers );
                 }
-
-                console.log( sFunc + 'err', err );
-                reject( -1 );
             } );
             console.log( sFunc + 'sql', go.sql );
 

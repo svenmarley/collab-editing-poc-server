@@ -37,7 +37,7 @@ class Mutation {
 
     save() {
         let sFunc = this.#sFunc + '.save( )-->';
-        const debug = true;
+        const debug = false;
 
         debug && console.log( sFunc + 'this.mutation', this.toString() );
 
@@ -47,7 +47,7 @@ class Mutation {
             let vars = [];
             MutationPeer.findOne( this )
                         .then( ( mut ) => {
-                            sFunc += '.MutationPeer.findOne().then()-->';
+                            sFunc += '.MutationPeer.findOne().then( )-->';
                             debug && console.log( sFunc + 'returned mut', mut );
 
                             if ( mut ) {
@@ -57,7 +57,7 @@ class Mutation {
                                 let go = dbConnection.query( sQuery, vars, ( err, rows ) => {
                                     debug && console.log( sFunc + 'err', err, 'rows', rows );
                                 } );
-                                console.log( sFunc + 'sql', go.sql );
+                                debug && console.log( sFunc + 'sql', go.sql );
 
                                 respond( true );
                             }
@@ -77,7 +77,7 @@ class Mutation {
                                         this.ID = results.insertId;
                                         respond( { ID : this.ID } );
                                     }
-                                    console.log( sFunc + 'sql', go.sql );
+                                    debug && console.log( sFunc + 'sql', go.sql );
                                 } );
                             }
 

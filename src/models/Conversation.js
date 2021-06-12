@@ -46,7 +46,7 @@ class Conversation {
                                             console.log( sFunc + 'ERROR: results', results );
                                         respond( bRet );
                                     } );
-                                    console.log( sFunc + 'sql', go.sql );
+                                    debug && console.log( sFunc + 'sql', go.sql );
 
                                 }
                                 else {
@@ -68,7 +68,7 @@ class Conversation {
                                         reject( 'Record not updated ' );
 
                                     } );
-                                    console.log( sFunc + 'sql', go.sql );
+                                    debug && console.log( sFunc + 'sql', go.sql );
                                 }
 
                             } )

@@ -58,7 +58,7 @@ class ConversationPeer {
 
     static truncate() {
         const sFunc = 'ConversationPeer.truncate()-->';
-        const debug = true;
+        const debug = false;
 
         return new Promise( ( respond, reject ) => {
             let q = 'truncate tblCONVERSATIONS;';

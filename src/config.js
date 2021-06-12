@@ -6,6 +6,8 @@ exports.msgServerPath = process.env.ORIGIN || `ws:127.0.0.1:${exports.msgServerP
 
 exports.apiServerPort = process.env.PORT || exports.webPort + 2;
 exports.apiServerPath = process.env.ORIGIN || `http://127.0.0.1:${exports.apiServerPort}`;
+exports.apiServerPathRaw = process.env.ORIGIN || `http://127.0.0.1`;
+
 
 exports.githubURL = 'https://github.com/svenmarley/collab-editing-poc';
 exports.authorName = 'Mike Anderson';
