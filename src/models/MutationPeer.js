@@ -38,8 +38,8 @@ class MutationPeer {
                 query = 'SELECT * FROM tblMUTATIONS where ';
                 query += ' CONVERSATION_ID = ?';
                 vars.push( mut.conversationId );
-                query += ' and ORIGIN = ? ';
-                vars.push( mut.origin );
+                query += ' and MUTATIONS_ORIGIN = ? ';
+                vars.push( mut.mutationsOrigin );
             }
             else {
                 //{ ORIGIN : inOrigin }
@@ -69,12 +69,12 @@ class MutationPeer {
                         let mut = new Mutation();
                         mut.ID = row.ID;
                         mut.conversationId = row.CONVERSATION_ID;
-                        mut.origin = row.ORIGIN;
+                        mut.mutationsOrigin = row.MUTATIONS_ORIGIN;
                         mut.mutation = row.MUTATION;
                         mut.auditDateTime = row.AUDIT_DATE_TIME;
                         mut.userId = row.USER_ID;
 
-                        console.log( sFunc + 'mut', mut );
+                        debug && console.log( sFunc + 'mut', mut );
 
                         aMutations.push( mut );
 

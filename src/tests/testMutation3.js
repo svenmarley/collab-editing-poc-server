@@ -1,28 +1,28 @@
 const { apiSend, gHeaders } = require( './shared' );
-const { sendMutation } = require( './testMutation' );
+const { sendMutation2 } = require( './testMutation2' );
 
-function sendMutation2() {
+function sendMutation3() {
 
-    return new Promise( ( respond, reject ) => {
-        sendMutation()
+    return new Promise( ( respond, /*reject*/ ) => {
+        sendMutation2()
             .then( result => {
-                let sFunc = 'after 4th Mutation';
-                console.log( sFunc + 'from testMutation 1 returned', result );
-                gHeaders.Authorization = 'bob';
+                let sFunc = 'after Mutation2';
+                console.log( sFunc + 'from testMutation 2 returned', result );
+                gHeaders.Authorization = 'alice';
                 let newDocID = 1;
 
                 let tBody = {
                     'author' : gHeaders.Authorization,
                     'conversationId' : newDocID,
                     'data' : {
-                        'index' : 12,
+                        'index' : 13,
                         'length' : 4,
                         'text' : '',
-                        'type' : 'del',
+                        'type' : 'del',     // deleting ' red'
                     },
                     'origin' : {
                         'alice' : 0,
-                        'bob' : 4,
+                        'bob' : 6,
                     },
                 };
                 let options = {
@@ -33,32 +33,31 @@ function sendMutation2() {
 
                 apiSend( '/mutations', options )
                     .then( ( results ) => {
-                        sFunc = '5th mutation-->';
+                        sFunc = 'after 1st mutation-->';
                         console.log( sFunc + 'tBody', tBody, 'results', results );
 
-                        tBody.data.index = 12;
+                        // also as alice
+                        tBody.data.index = 13;
                         tBody.data.length = 5
-                        tBody.data.text = ' blue'
+                        tBody.data.text = 'green'
                         tBody.data.type = 'INS';
-                        tBody.origin.bob++;
+                        tBody.origin.alice++;
                         options.body = JSON.stringify( tBody )
 
                         apiSend( '/mutations', options )
                             .then( ( results ) => {
-                                sFunc = '6th mutation-->';
+                                sFunc = 'after 2nd mutation-->';
 
-                                const tText = 'The house is blue';
-                                const tOrigin = '(0,6)';
+                                const tText = 'The house is green';
+                                const tOrigin = '(2,6)';
 
                                 console.log( sFunc +
                                                  `expected text' [${tText}] received [${results.text}] expected origin [${tOrigin}] received [${results.origin}]` );
                                 if ( ( tText !== results.text ) || ( tOrigin !== results.origin ) ) {
                                     console.log( 'ERROR: didnt match' );
-                                    reject( 'didnt match' );
                                 }
                                 else
                                     console.log( 'SUCCESS' );
-
 
                                 respond( {ok: true })
                             } );
@@ -68,4 +67,4 @@ function sendMutation2() {
     } );
 }
 
-module.exports = { sendMutation2 };
+module.exports = { sendMutation3 };

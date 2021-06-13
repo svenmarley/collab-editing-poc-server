@@ -7,32 +7,32 @@ class Mutation {
     ID = null;
     conversationId = null;
     userId = null;
-    origin = null;    // todo: all should be made private
+    mutationsOrigin = null;    // todo: all should be made private
     mutation = null;
     auditDateTime = null;
     className = 'Mutation';
 
-    constructor( inConversationId, inAuthor, inOrigin, inMutation ) {
+    constructor( inConversationId, inOrigin, inMutation ) {
         const sFunc = this.#sFunc + '.constructor()-->';
-        const debug = true;
+        const debug = false;
 
         this.conversationId = inConversationId;
-        this.origin = inOrigin;
+        this.mutationsOrigin = inOrigin;
         this.mutation = inMutation;
 
-        if ( typeof ( inAuthor ) === 'string' ) {
-            let user = UserPeer.getUser( inAuthor );
-            debug && console.log( sFunc + 'inAuthor', inAuthor, 'user', user );
+        if ( typeof ( currAuthor ) === 'string' ) {
+            let user = UserPeer.getUser( currAuthor );
+            debug && console.log( sFunc + 'currAuthor', currAuthor, 'user', user );
             this.userId = user.id;
         }
         else {
-            this.userId = inAuthor;
+            this.userId = currAuthor;
         }
 
     }
 
     toString() {
-        return `ID[${this.ID}] conversationId[${this.conversationId}] origin[${this.origin}] mutation[${this.mutation}]`;
+        return `ID[${this.ID}] conversationId[${this.conversationId}] origin[${this.mutationsOrigin}] mutation[${this.mutation}]`;
     }
 
     save() {
@@ -52,8 +52,8 @@ class Mutation {
 
                             if ( mut ) {
                                 // updating old rec
-                                vars = [ this.conversationId, this.origin, this.mutation, this.ID ];
-                                sQuery = 'UPDATE tblMUTATIONS set CONVERSATION_ID = ?, ORIGIN = ?, MUTATION = ? where ID = ? ';
+                                vars = [ this.conversationId, this.mutationsOrigin, this.mutation, this.ID ];
+                                sQuery = 'UPDATE tblMUTATIONS set CONVERSATION_ID = ?, MUTATIONS_ORIGIN = ?, MUTATION = ? where ID = ? ';
                                 let go = dbConnection.query( sQuery, vars, ( err, rows ) => {
                                     debug && console.log( sFunc + 'err', err, 'rows', rows );
                                 } );
@@ -66,7 +66,7 @@ class Mutation {
                                 sQuery = 'INSERT INTO tblMUTATIONS SET ?';
                                 vars = {
                                     CONVERSATION_ID : this.conversationId,
-                                    ORIGIN : this.origin,
+                                    MUTATIONS_ORIGIN : this.mutationsOrigin,
                                     MUTATION : this.mutation,
                                     USER_ID : this.userId,
                                 };
