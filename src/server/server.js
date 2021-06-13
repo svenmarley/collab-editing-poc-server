@@ -19,6 +19,7 @@ global.dbConnection = mysql.createConnection( {
                                                   password : 'Password01!',
                                                   database : 'collab_editing_poc_server_db',
                                               } );
+global.currAuthor = '';
 
 dbConnection.connect( ( err ) => {
     if ( err ) {
@@ -31,6 +32,7 @@ dbConnection.connect( ( err ) => {
 
 // global.mysql = require( 'mysql2/promise' );
 
+
 // ****************************************************************************************************************
 // ****************************************************************************************************************
 // ****************************************************************************************************************
@@ -38,8 +40,18 @@ dbConnection.connect( ( err ) => {
 const WebSocketServer = require( 'websocket' );
 const http = require( 'http' );
 const { isDelete, isInsert } = require( '../models/Conversation' );
-const { Mutation } = require( '../models/Mutation' );
 const { MutationPeer } = require( '../models/MutationPeer' );
+
+
+
+// let mute = "alice (2,6)INS 3:' big'"
+// let m = breakMutation( mute )
+// console.log( sFunc + 'mute', mute, 'm', m )
+// mute = "bob (1,1)DEL 3:2"
+// m = breakMutation( mute )
+// console.log( sFunc + 'mute', mute, 'm', m )
+
+
 
 const server = http.createServer( ( req, res ) => {
     const sFunc = sFunc + '.http.createServer()-->';
@@ -69,7 +81,6 @@ wsServer.on( 'connection', function( connection ) {
 } );
 
 let clients = [];
-let x = 0;
 wsServer.on( 'request', function( request ) {
     const sFunc = 'wsServer.on(\'request\')-->';
     const debug = true;
@@ -83,24 +94,24 @@ wsServer.on( 'request', function( request ) {
     clients.push( connection );
     debug && console.log( sFunc + 'connected: ' + tempID ); //, 'connection', connection );// + Object.getOwnPropertyNames( clients ) );
 
-    connection.on( 'message', function( message ) {
-        const sFunc = 'wsServer. connection.on()-->';
-        debug && console.log( sFunc + 'Message received: ', message.utf8Data );
-        const m = JSON.parse( message.utf8Data );
-        debug && console.log( sFunc + 'test', m.value );
-
-        if ( !( ++x % 9 ) ) {
-            // send something up every X chars
-
-            x = 0;
-            connection.send( JSON.stringify( {
-                                                 type : 'fileUpdate',
-                                                 author : 'bob',
-                                                 value : m.value + '#',
-                                             } ) );
-        }
-
-    } );
+    // connection.on( 'message', function( message ) {
+    //     const sFunc = 'wsServer. connection.on()-->';
+    //     debug && console.log( sFunc + 'Message received: ', message.utf8Data );
+    //     const m = JSON.parse( message.utf8Data );
+    //     debug && console.log( sFunc + 'test', m.value );
+    //
+    //     if ( !( ++x % 9 ) ) {
+    //         // send something up every X chars
+    //
+    //         x = 0;
+    //         connection.send( JSON.stringify( {
+    //                                              type : 'fileUpdate',
+    //                                              author : 'bob',
+    //                                              value : m.value + '#',
+    //                                          } ) );
+    //     }
+    //
+    // } );
 
 } );
 
@@ -140,11 +151,11 @@ app.get( '/ping', ( req, res ) => {
 app.get( '/info', ( req, res ) => {
     const sFunc = 'app.get()  /info-->';
 
-    let userShortName = req.get( 'Authorization' );
+    global.currAuthor = req.get( 'Authorization' );
 
-    console.log( sFunc + 'userShortName', userShortName );
+    console.log( sFunc + 'userShortName', currAuthor );
 
-    UserPeer.findOne( { SHORT_NAME : userShortName } )
+    UserPeer.findOne( { SHORT_NAME : currAuthor } )
             .then( ( user ) => {
                 let t = {
                     'ok' : true,
@@ -177,6 +188,7 @@ app.get( '/conversations', ( req, res ) => {
     const debug = true;
 
     console.log( sFunc + 'req.path', req.path );
+    global.currAuthor = req.get( 'Authorization' );
 
     ConversationPeer.find()
                     .then( ( aCons ) => {
@@ -210,6 +222,7 @@ app.get( '/conversations/:conversationId', ( req, res ) => {
     const debug = true;
 
     debug && console.log( sFunc + 'conversationId', conversationId );
+    global.currAuthor = req.get( 'Authorization' );
 
     ConversationPeer.findOne( conversationId )
                     .then( ( con ) => {
@@ -234,11 +247,13 @@ app.get( '/conversations/:conversationId', ( req, res ) => {
 } );
 
 app.post( '/conversations/', ( req, res ) => {
-    const sFunc = 'server.js.app.post(/cons)   /conversations/-->';
+    const sFunc = 'server.js.app.post()   /conversations/-->';
 
     let Con = new Conversation();
 
-    Con.content = '';
+    global.currAuthor = req.get( 'Authorization' );
+
+    //Con.content = req.body;
 
     Con.save()
        .then( ( ret ) => {
@@ -247,6 +262,7 @@ app.post( '/conversations/', ( req, res ) => {
            const t = {
                ID : ret.ID,
            };
+           console.log( sFunc + 'returning', t );
            res.send( t );
        } )
        .catch( ( e ) => {
@@ -259,8 +275,9 @@ app.post( '/mutations', ( req, res ) => {
     const sFunc = `app.post()  /mutations/  -->`;
     const debug = true;
 
-    const author = req.get( 'Authorization' );
-    debug && console.log( sFunc + 'author', author );
+    global.currAuthor = req.get( 'Authorization' );
+
+    debug && console.log( sFunc + 'currAuthor', currAuthor );
 
     //console.log( sFunc + 'req', req );
     debug && console.log( sFunc + 'req.body ', req.body );
@@ -289,7 +306,7 @@ app.post( '/mutations', ( req, res ) => {
                             let origin = `(${originBlock.alice},${originBlock.bob})`;
                             console.log( sFunc + 'origin', origin );
 
-                            conversation.applyMutation( origin, type, index, length, text, author )
+                            conversation.applyMutation( origin, type, index, length, text )
                                         .then( ( bResult ) => {
 
                                             if ( bResult ) {
@@ -297,10 +314,12 @@ app.post( '/mutations', ( req, res ) => {
                                                     msg : '',
                                                     'ok' : true,
                                                     'text' : conversation.getContent(),
-                                                    origin: conversation.origin,
+                                                    origin : conversation.origin,
                                                 };
                                                 res.send( body );
                                             }
+
+                                            console.log( sFunc + 'new conversation', conversation)
 
                                             sendConversationUpdate( conversation );
 
@@ -331,12 +350,14 @@ app.post( '/mutations', ( req, res ) => {
 
 app.use( ( req, res, next ) => {
     const sFunc = 'server.js.app.use()--> ';
+    const debug = false;
     const token = req.get( 'Authorization' );
 
     if ( token ) {
         req.token = token;
+        global.currAuthor = token;
 
-        //console.log( sFunc + 'author', token );
+        debug && console.log( sFunc + 'author', token );
 
         next();
     }
@@ -372,43 +393,17 @@ app.get( '/resetDb', ( req, res ) => {
     const sFunc = 'server.app.post()  /resetDb ';
     const debug = true;
 
+    global.currAuthor = req.get( 'Authorization' );
+
     ConversationPeer.truncate()
                     .then( ( /* results */ ) => {
-                        let con = new Conversation();
 
-                        con.origin = '(1,1)';
-                        con.lastMutation = 'bob (1,0)DEL 11:1';
-                        con.setContent( 'hello world' );
-                        con.save()
-                           .then( ( results ) => {
-                               debug && console.log( sFunc + 'con.save() results', results, 'new ID', con.ID );
+                        MutationPeer.truncate()
+                                            .then( ( /*results*/ ) => {
+                                                res.send( { ok : true } );
+                                            })
 
-                               MutationPeer.truncate()
-                                           .then( ( results ) => {
-
-                                               debug && console.log( sFunc + 'mut.save() results', results );
-
-                                               let mut = new Mutation( con.ID,
-                                                                       1,
-                                                                       '(0,0)',
-                                                                       'alice (0,0)INS 0:\'hello worldx\'' );
-
-                                               mut.save()
-                                                  .then( ( /* results */ ) => {
-                                                      let mut = new Mutation( con.ID,
-                                                                              2,
-                                                                              '(1,0)',
-                                                                              'bob (1,0)DEL: 11:1' );
-
-                                                      mut.save()
-                                                         .then( ( /* results */ ) => {
-                                                             debug && console.log( sFunc + 'mut.save() results', results );
-
-                                                             res.send( { OK: true } );
-                                                         } );
-                                                  } );
-                                           } );
-                           } );
+                        debug && console.log( 'done' );
                     } )
                     .catch( ( e ) => {
                         console.log( sFunc + 'error', e );
