@@ -16,7 +16,7 @@ class User {
         const sFunc = this.#sFunc + '.save()-->';
         const debug = true;
 
-        return new Promise( ( respond, reject ) => {
+        return new Promise( () => {
             debug && console.log( sFunc + 'inside' );
 
             if ( this.ID ) {
@@ -41,8 +41,3 @@ class User {
 
 module.exports = { User };
 
-String.prototype.splice = function( offset, text, removeCount = 0 ) {
-    let calculatedOffset = offset < 0 ? this.length + offset : offset;
-    return this.substring( 0, calculatedOffset ) +
-        text + this.substring( calculatedOffset + removeCount );
-};
