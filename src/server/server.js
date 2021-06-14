@@ -1,6 +1,7 @@
 const { ConversationPeer } = require( '../models/ConversationPeer' );
 const { Conversation } = require( '../models/Conversation' );
 const { UserPeer } = require( '../models/UserPeer' );
+require( 'dotenv' ).config();
 
 const sFunc = __filename + '-->';
 
@@ -12,12 +13,15 @@ const config = require( '../config' );
 const app = express();
 
 global.mysql = require( 'mysql' );
+
+const { DB_SERVER : dbServer, DB_PORT : dbPort, DB_USERNAME : dbUser, DB_PASSWORD : dbPassword, DB_DATABASE : dbDb } = config;
+console.log( dbServer, dbPort, dbUser, dbPassword, dbDb );
 global.dbConnection = mysql.createConnection( {
-                                                  host : 'localhost',
-                                                  port : 3389,
-                                                  user : 'user',
-                                                  password : 'Password01!',
-                                                  database : 'collab_editing_poc_server_db',
+                                                  host : dbServer,
+                                                  port : dbPort,
+                                                  user : dbUser,
+                                                  password : dbPassword,
+                                                  database : dbDb,
                                               } );
 global.currAuthor = '';
 
@@ -27,11 +31,31 @@ dbConnection.connect( ( err ) => {
         throw err;
     }
 
-    console.log( 'Connected to database' );
+    console.log( 'Connected to database at', dbServer, dbPort, 'on db', dbDb );
 } );
 
-// global.mysql = require( 'mysql2/promise' );
+dbConnection.query( 'show tables;', ( err, rows ) => {
+    console.log( 'tables', rows );
+})
 
+dbConnection.query( 'select * from tblUSERS;', ( err, rows ) => {
+    console.log( 'select * from tblUSERS;', rows );
+})
+
+// const query = `SELECT * from ${dbDb}.tblUSERS;`;
+// dbConnection.query( 'USE ' + dbDb, function( err, rows ) {
+//     console.log( rows );
+//     if ( err ) throw err;
+//     let go = dbConnection.query( query, ( err, rows ) => {
+//         console.log( 'returning err', err, 'rows', rows );
+//
+//     } );
+//     console.log( 'sql', go.sql );
+// } );
+
+console.log( 'ready' );
+
+// global.mysql = require( 'mysql2/promise' );
 
 // ****************************************************************************************************************
 // ****************************************************************************************************************
@@ -42,16 +66,12 @@ const http = require( 'http' );
 const { isDelete, isInsert } = require( '../models/Conversation' );
 const { MutationPeer } = require( '../models/MutationPeer' );
 
-
-
 // let mute = "alice (2,6)INS 3:' big'"
 // let m = breakMutation( mute )
 // console.log( sFunc + 'mute', mute, 'm', m )
 // mute = "bob (1,1)DEL 3:2"
 // m = breakMutation( mute )
 // console.log( sFunc + 'mute', mute, 'm', m )
-
-
 
 const server = http.createServer( ( req, res ) => {
     const sFunc = sFunc + '.http.createServer()-->';
@@ -319,7 +339,7 @@ app.post( '/mutations', ( req, res ) => {
                                                 res.send( body );
                                             }
 
-                                            console.log( sFunc + 'new conversation', conversation)
+                                            console.log( sFunc + 'new conversation', conversation );
 
                                             sendConversationUpdate( conversation );
 
@@ -384,7 +404,7 @@ app.use( ( req, res, next ) => {
 //     }
 //     else {
 //         res.status( 403 ).send( {
-//                                     error : 'Please provide both a name and a handle',
+//                                      error : 'Please provide both a name and a handle',
 //                                 } );
 //     }
 // } );
@@ -399,9 +419,9 @@ app.get( '/resetDb', ( req, res ) => {
                     .then( ( /* results */ ) => {
 
                         MutationPeer.truncate()
-                                            .then( ( /*results*/ ) => {
-                                                res.send( { ok : true } );
-                                            })
+                                    .then( ( /*results*/ ) => {
+                                        res.send( { ok : true } );
+                                    } );
 
                         debug && console.log( 'done' );
                     } )
