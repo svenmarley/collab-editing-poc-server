@@ -81,6 +81,7 @@ const server = http.createServer( ( req, res ) => {
     res.end();
 } );
 
+console.log( 'config', config );
 server.listen( config.msgServerPort, () => {
     console.log( 'Starting web socket server on port', config.msgServerPort );
 } );
