@@ -73,13 +73,14 @@ const { MutationPeer } = require( '../models/MutationPeer' );
 // m = breakMutation( mute )
 // console.log( sFunc + 'mute', mute, 'm', m )
 
-const server = http.createServer( ( req, res ) => {
-    const sFunc = sFunc + '.http.createServer()-->';
-
-    console.log( sFunc + 'Received req for ' + req.url );
-    res.writeHead( 404 );
-    res.end();
-} );
+const server = http.createServer(app);
+// const server = http.createServer( ( req, res ) => {
+//     const sFunc = sFunc + '.http.createServer()-->';
+//
+//     console.log( sFunc + 'Received req for ' + req.url );
+//     res.writeHead( 404 );
+//     res.end();
+// } );
 
 console.log( 'config', config );
 console.log( 'process.env', process.env );
