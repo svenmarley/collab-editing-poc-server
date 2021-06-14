@@ -19,7 +19,7 @@ else {
     exports.DB_USERNAME = 'w9tvz0v7owbqkdgd';
     exports.DB_PASSWORD = 'txgukn5y06hd1k0p';
     exports.DB_DATABASE = 'n9cmqi0btiolj9xe';
-    exports.apiServerPort = 80; //process.env.PORT || exports.webPort + 2;
+    exports.apiServerPort = process.env.PORT || 80; //process.env.PORT || exports.webPort + 2;
 
 }
 
