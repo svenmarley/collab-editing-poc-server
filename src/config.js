@@ -23,10 +23,10 @@ else {
 exports.webPort = 3000; //process.env.UI_PORT || 3000;
 exports.webURL = process.env.UI_PATH || `http://${apiHost}:${exports.webPort}`;
 
-exports.msgServerPort = process.env.PORT || exports.webPort + 1;
+exports.msgServerPort = exports.webPort + 1; //process.env.PORT || exports.webPort + 1;
 exports.msgServerPath = process.env.ORIGIN || `ws:${apiHost}:${exports.msgServerPort}`;
 
-exports.apiServerPort = process.env.PORT || exports.webPort + 2;
+exports.apiServerPort = exports.webPort + 2; //process.env.PORT || exports.webPort + 2;
 exports.apiServerPath = process.env.ORIGIN || `http://${apiHost}:${exports.apiServerPort}`;
 exports.apiServerPathRaw = process.env.ORIGIN || `http://${apiHost}`;
 
