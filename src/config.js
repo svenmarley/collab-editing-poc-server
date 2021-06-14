@@ -9,6 +9,7 @@ if ( fs.existsSync( process.cwd() + '/temp.log' ) ) {
     exports.DB_PASSWORD = `Password01!`;
     exports.DB_DATABASE = 'collab_editing_poc_server_db';
     exports.webPort = 3000; //process.env.UI_PORT || 3000;
+    exports.apiServerPort = exports.webPort + 2; //process.env.PORT || exports.webPort + 2;
 
 }
 else {
@@ -18,7 +19,7 @@ else {
     exports.DB_USERNAME = 'w9tvz0v7owbqkdgd';
     exports.DB_PASSWORD = 'txgukn5y06hd1k0p';
     exports.DB_DATABASE = 'n9cmqi0btiolj9xe';
-    exports.webPort = 80;
+    exports.apiServerPort = 80; //process.env.PORT || exports.webPort + 2;
 
 }
 
@@ -27,7 +28,6 @@ exports.webURL = process.env.UI_PATH || `http://${apiHost}:${exports.webPort}`;
 exports.msgServerPort = exports.webPort + 1; //process.env.PORT || exports.webPort + 1;
 exports.msgServerPath = process.env.ORIGIN || `ws:${apiHost}:${exports.msgServerPort}`;
 
-exports.apiServerPort = exports.webPort + 2; //process.env.PORT || exports.webPort + 2;
 exports.apiServerPath = process.env.ORIGIN || `http://${apiHost}:${exports.apiServerPort}`;
 exports.apiServerPathRaw = process.env.ORIGIN || `http://${apiHost}`;
 
