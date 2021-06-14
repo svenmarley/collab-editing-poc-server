@@ -22,7 +22,7 @@ else {
 
 }
 exports.apiServerPort = process.env.PORT || exports.webPort + 2;
-exports.msgServerPort = process.env.PORT + 1 || exports.webPort + 1; //process.env.PORT || exports.webPort + 1;
+exports.msgServerPort = parseInt(process.env.PORT ) + 1 || exports.webPort + 1; //process.env.PORT || exports.webPort + 1;
 
 exports.webURL = process.env.UI_PATH || `http://${apiHost}:${exports.webPort}`;
 
