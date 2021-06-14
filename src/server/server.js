@@ -432,7 +432,7 @@ app.get( '/resetDb', ( req, res ) => {
 } );
 
 app.listen( config.apiServerPort, () => {
-    console.log( 'Server listening on port %s, Ctrl+C to stop', config.apiServerPort );
+    console.log( 'API Server listening on port %s, Ctrl+C to stop', config.apiServerPort );
 } );
 
 console.log( 'API server running on port ', config.apiServerPort );

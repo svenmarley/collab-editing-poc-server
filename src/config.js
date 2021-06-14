@@ -20,7 +20,7 @@ else {
 
 }
 
-exports.webPort = process.env.UI_PORT || 3000;
+exports.webPort = 3000; //process.env.UI_PORT || 3000;
 exports.webURL = process.env.UI_PATH || `http://${apiHost}:${exports.webPort}`;
 
 exports.msgServerPort = process.env.PORT || exports.webPort + 1;
