@@ -196,6 +196,10 @@ app.get( '/info', ( req, res ) => {
                         '2' : config.q2,
                         '3' : config.q3,
                     },
+                    thisServer: {
+                        apiServer: config.apiServerPath,
+                        msgServer: config.msgServerPath,
+                    }
                 };
 
                 console.log( sFunc + 'returning', t );

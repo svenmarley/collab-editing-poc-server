@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server/server.js"
+    "start": "node src/server/server.js",
+    "start_dev": "set NODE_ENV=dev&& nodemon src/server/server.js | tee temp.log;"
   },
   "keywords": [],
   "author": "",
