@@ -13,7 +13,7 @@ class Conversation {
     origin = '(0, 0)';
     lastMutation = null;
 
-    constructor( inConversationId, inContent = '', inOrigin = '', inLastMutation = '' ) {
+    constructor( inConversationId, inContent = '', inOrigin = '(0,0)', inLastMutation = '' ) {
 
         this.ID = inConversationId;
         this.content = inContent;
@@ -28,6 +28,25 @@ class Conversation {
 
     getContent() {
         return ( this.content );
+    }
+
+    delete() {
+        const sFunc = this.#sFunc + '.delete()-->';
+        const debug = true;
+
+        return new Promise( ( respond,/*reject*/ ) => {
+
+            const vars = [ this.ID ];
+
+            const sQuery = 'DELETE from  tblCONVERSATIONS where ID = ? ';
+            let go = dbConnection.query( sQuery, vars, ( err, results ) => {
+                debug && console.log( sFunc + 'err', err, 'results', results );
+
+                respond( { ok: true } );
+
+            } );
+            debug && console.log( sFunc + 'sql', go.sql );
+        } );
     }
 
     save() {
@@ -137,7 +156,7 @@ class Conversation {
         let sFunc = this.#sFunc + '.calcNewMutation()-->';
         const debug = false;
 
-        return new Promise( ( respond, /*reject*/ ) => {
+        return new Promise( ( respond /*reject*/ ) => {
 
             debug && console.log( sFunc + 'here', 'inOrigin', inOrigin, 'inType', inType, 'inIndex', inIndex );
             MutationPeer.findOne( { MUTATIONS_ORIGIN : inOrigin } )
