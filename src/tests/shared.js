@@ -7,19 +7,26 @@ const gHeaders = {
 };
 
 function apiSend( path, sendOptions ) {
-    const sFunc = 'apiSend()-->';
-    const debug = false;
+    let sFunc = 'apiSend()-->';
+    const debug = true;
 
-    debug && console.log( sFunc + 'path', path );
 
     const newPath = config.apiServerPath + path;
 
     if ( typeof ( sendOptions.headers ) === 'undefined' )
         sendOptions = { headers : sendOptions };
 
+    debug && console.log( sFunc + 'path', newPath, 'options', sendOptions );
+
     return new Promise( ( respond /* reject*/ ) => {
         fetch( newPath, sendOptions )
-            .then( res => res.json() )
+            .then( res => {
+                debug && console.log( sFunc + 'res', res );
+                if ( res.size )
+                    return res.json()
+
+                return res;
+            } )
             .then( body => {
                 respond( body );
             } );

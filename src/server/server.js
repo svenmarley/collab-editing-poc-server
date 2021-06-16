@@ -192,6 +192,7 @@ app.get( '/info', ( req, res ) => {
                     'language' : 'node.js',
                     'sources' : config.githubURL,
                     'answers' : {
+                        "All answers to questions are also in the Github repository's README.md": config.githubREADME,
                         '1' : config.q1,
                         '2' : config.q2,
                         '3' : config.q3,
@@ -211,7 +212,7 @@ app.get( '/info', ( req, res ) => {
 } );
 
 app.get( '/conversations', ( req, res ) => {
-    const sFunc = 'app.get()  /conversations  -->';
+    const sFunc = 'app.get()  /conversations -->';
     const debug = true;
 
     console.log( sFunc + 'req.path', req.path );
@@ -241,6 +242,35 @@ app.get( '/conversations', ( req, res ) => {
                     } );
 
 } );
+
+app.delete( '/conversations/:conversationId', (req, res ) => {
+    const { conversationId } = req.params;
+
+    const sFunc = `app.delete()  /conversations/${conversationId}  -->`;
+    const debug = true;
+
+    debug && console.log( 'deleting id', conversationId )
+
+    ConversationPeer.findOne( conversationId )
+                    .then( ( conversation ) => {
+                        debug && console.log( sFunc + 'found', conversation)
+
+                        if ( conversation ) {
+                            conversation.delete()
+                                .then( (result ) => {
+                                    debug && console.log( sFunc + 'result', result );
+
+                                    res.sendStatus( 204 )
+                                });
+                        }
+                        else {
+                            // no conversation found
+
+                            res.sendStatus( 404 )
+                        }
+                    })
+})
+
 
 app.get( '/conversations/:conversationId', ( req, res ) => {
     const { conversationId } = req.params;
@@ -297,6 +327,8 @@ app.post( '/conversations/', ( req, res ) => {
        } );
 
 } );
+
+
 
 app.post( '/mutations', ( req, res ) => {
     const sFunc = `app.post()  /mutations/  -->`;
