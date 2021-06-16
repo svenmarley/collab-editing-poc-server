@@ -2,6 +2,8 @@ const { sendMutation } = require( './testMutation' );
 const { sendMutation2 } = require( './testMutation2' );
 const { sendMutation3 } = require( './testMutation3' );
 const { sendMutation4 } = require( './testMutation4' );
+const { createConversation } = require( './testCreate')
+const { deleteConversation } = require( './testDelete')
 
 const myArgs = process.argv.slice( 2 );
 const runThis = parseInt( myArgs[0] );
@@ -33,8 +35,22 @@ else if ( runThis === 4 ) {
         .then( e => {
             console.log( '4 returned', e );
         } );
-
 }
+else if ( runThis === 6 ) {
+    createConversation()
+        .then( e => {
+            console.log( '6 returned', e );
+        })
+}
+else if ( runThis === 7 ) {
+    const deleteId = parseInt( myArgs[1] );
+    console.log( 'Deleting conversation:', deleteId)
+    deleteConversation( deleteId )
+        .then( e => {
+            console.log( '7 returned', e );
+        })
+}
+
 
 
 
