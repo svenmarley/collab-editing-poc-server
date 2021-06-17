@@ -22,7 +22,7 @@ if ( fs.existsSync( process.cwd() + '/temp.log' ) ) {
 else {
     // apiHost = 'floating-hamlet-81896.herokuapp.com';   // heroku
 
-    exports.webURL = 'https://hidden-hollows-45703.herokuapp.com';
+    exports.webURL = 'http://18.117.179.13:3000/';
     apiHost = '52.14.91.154';       // amazon
     exports.DB_SERVER = 'u3r5w4ayhxzdrw87.cbetxkdyhwsb.us-east-1.rds.amazonaws.com';
 
