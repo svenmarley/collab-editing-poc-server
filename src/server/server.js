@@ -427,27 +427,6 @@ app.use( ( req, res, next ) => {
     }
 } );
 
-// app.get( '/contacts', ( req, res ) => {
-//     res.send( contacts.get( req.token ) );
-// } );
-//
-// app.delete( '/contacts/:id', ( req, res ) => {
-//     res.send( contacts.remove( req.token, req.params.id ) );
-// } );
-//
-// app.post( '/contacts', bodyParser.json(), ( req, res ) => {
-//     const { name, handle } = req.body;
-//
-//     if ( name && handle ) {
-//         res.send( contacts.add( req.token, req.body ) );
-//     }
-//     else {
-//         res.status( 403 ).send( {
-//                                      error : 'Please provide both a name and a handle',
-//                                 } );
-//     }
-// } );
-
 app.get( '/resetDb', ( req, res ) => {
     const sFunc = 'server.app.post()  /resetDb ';
     const debug = true;
